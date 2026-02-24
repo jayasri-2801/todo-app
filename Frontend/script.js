@@ -1,85 +1,121 @@
-const task_input = document.getElementById("inp");
-const add_btn = document.getElementById("add-btn");
-const task_list = document.getElementById("tasklist");
+const API_URL = "https://todo-application-backend-yhsh.onrender.com/todolist";
+const COUNT_URL = "https://todo-application-backend-yhsh.onrender.com/counts";
 
-const API_URL = "https://todo-backend-f69b.onrender.com/todolist";
+const taskInput = document.getElementById("taskInput");
+const addBtn = document.getElementById("addBtn");
+const taskList = document.getElementById("taskList");
+const taskCount = document.getElementById("taskCount");
 
-// Load tasks when page loads
+
+// Load tasks
 window.addEventListener("DOMContentLoaded", () => {
+
     fetch(API_URL)
-    .then(res => res.json())
-    .then(tasks => {
-        tasks.forEach(task => {
-            createTask(task._id, task.userTask, task.status);
+        .then(res => res.json())
+        .then(data => {
+            taskList.innerHTML = "";
+            data.forEach(task => {
+                createTask(task._id, task.userTask, task.status);
+            });
+            loadCounts();
         });
-    });
+
 });
 
-// Add Task
-add_btn.addEventListener("click", () => {
-    const input_value = task_input.value;
 
-    if(input_value === ""){
-        alert("Please enter a task!");
+// Load counts from backend
+function loadCounts() {
+    fetch(COUNT_URL)
+        .then(res => res.json())
+        .then(data => {
+            taskCount.innerText =
+                `Total: ${data.total} | Completed: ${data.completed}`;
+        });
+}
+
+
+// Create task UI
+function createTask(id, text, status) {
+
+    const li = document.createElement("li");
+
+    const leftDiv = document.createElement("div");
+    leftDiv.style.display = "flex";
+    leftDiv.style.alignItems = "center";
+
+    const checkBtn = document.createElement("div");
+    checkBtn.classList.add("checkBtn");
+
+    const span = document.createElement("span");
+    span.innerText = text;
+    span.style.marginLeft = "10px";
+
+    if (status) {
+        checkBtn.classList.add("completedCircle");
+        span.classList.add("completed");
+    }
+
+    checkBtn.addEventListener("click", () => {
+
+        const newStatus = !span.classList.contains("completed");
+
+        fetch(`${API_URL}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(() => loadCounts());
+
+        checkBtn.classList.toggle("completedCircle");
+        span.classList.toggle("completed");
+    });
+
+    leftDiv.appendChild(checkBtn);
+    leftDiv.appendChild(span);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.innerText = "Delete";
+    deleteBtn.classList.add("deleteBtn");
+
+    deleteBtn.addEventListener("click", () => {
+
+        fetch(`${API_URL}/${id}`, { method: "DELETE" })
+            .then(() => loadCounts());
+
+        li.remove();
+    });
+
+    li.appendChild(leftDiv);
+    li.appendChild(deleteBtn);
+    taskList.appendChild(li);
+}
+
+
+// Add task
+addBtn.addEventListener("click", () => {
+
+    const text = taskInput.value.trim();
+
+    if (text === "") {
+        alert("Please enter a task");
         return;
     }
 
     fetch(API_URL, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ userTask: input_value })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userTask: text })
     })
     .then(res => res.json())
     .then(newTask => {
         createTask(newTask._id, newTask.userTask, newTask.status);
-        task_input.value = "";
+        taskInput.value = "";
+        loadCounts();
     });
+
 });
 
-function createTask(id, text, status){
 
-    const li = document.createElement("li");
-
-    const comp_btn = document.createElement("button");
-    comp_btn.className = "comp-btn";
-
-    const span = document.createElement("span");
-    span.className = "tasktext";
-    span.textContent = text;
-
-    const del_btn = document.createElement("button");
-    del_btn.className = "dlt-btn";
-    del_btn.textContent = "Delete";
-
-    if(status){
-        comp_btn.classList.add("marked");
-        comp_btn.textContent = "✔";
-        span.classList.add("taskcomp");
-    }
-
-    comp_btn.addEventListener("click", () => {
-        fetch(API_URL + "/" + id, {
-            method:"PUT",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({ status: !status })
-        })
-        .then(() => {
-            comp_btn.classList.toggle("marked");
-            span.classList.toggle("taskcomp");
-            comp_btn.textContent = comp_btn.textContent === "✔" ? "" : "✔";
-        });
-    });
-
-    del_btn.addEventListener("click", () => {
-        fetch(API_URL + "/" + id, { method:"DELETE" })
-        .then(() => {
-            task_list.removeChild(li);
-        });
-    });
-
-    li.appendChild(comp_btn);
-    li.appendChild(span);
-    li.appendChild(del_btn);
-    task_list.appendChild(li);
-}
-
+taskInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") addBtn.click();
+});
