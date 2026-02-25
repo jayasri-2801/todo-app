@@ -1,4 +1,4 @@
-const API_URL = "https://todo-app-back-2awt.onrender.com/todo.js";
+const API_URL = "https://todo-app-back-2awt.onrender.com/todo";
 const COUNT_URL = "https://todo-app-back-2awt.onrender.com/counter";
 
 const taskInput = document.getElementById("taskInput");
