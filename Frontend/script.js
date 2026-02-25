@@ -1,13 +1,11 @@
-const API_URL = "https://todo-app-back-2awt.onrender.com/todo";
-const COUNT_URL = "https://todo-app-back-2awt.onrender.com/counter";
+const API_URL = "https://todo-app-back-2awt.onrender.com/todolist";
+const COUNT_URL = "https://todo-app-back-2awt.onrender.com/counts";
 
 const taskInput = document.getElementById("taskInput");
 const addBtn = document.getElementById("addBtn");
 const taskList = document.getElementById("taskList");
 const taskCount = document.getElementById("taskCount");
 
-
-// Load tasks
 window.addEventListener("DOMContentLoaded", () => {
 
     fetch(API_URL)
@@ -18,23 +16,22 @@ window.addEventListener("DOMContentLoaded", () => {
                 createTask(task._id, task.userTask, task.status);
             });
             loadCounts();
-        });
+        })
+        .catch(err => console.log(err));
 
 });
 
 
-// Load counts from backend
 function loadCounts() {
     fetch(COUNT_URL)
         .then(res => res.json())
         .then(data => {
             taskCount.innerText =
                 `Total: ${data.total} | Completed: ${data.completed}`;
-        });
+        })
+        .catch(err => console.log(err));
 }
 
-
-// Create task UI
 function createTask(id, text, status) {
 
     const li = document.createElement("li");
@@ -90,8 +87,6 @@ function createTask(id, text, status) {
     taskList.appendChild(li);
 }
 
-
-// Add task
 addBtn.addEventListener("click", () => {
 
     const text = taskInput.value.trim();
@@ -111,7 +106,8 @@ addBtn.addEventListener("click", () => {
         createTask(newTask._id, newTask.userTask, newTask.status);
         taskInput.value = "";
         loadCounts();
-    });
+    })
+    .catch(err => console.log(err));
 
 });
 
